@@ -1,6 +1,6 @@
 {
   "name": "@gmod/faidx",
-  "version": "0.0.1",
+  "version": "1.0.1",
   "description": "create indexed fasta files",
   "license": "MIT",
   "repository": "GMOD/faidx-js",
