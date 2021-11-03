@@ -1,7 +1,7 @@
 import fs from "fs";
 import split2 from "split2";
 import pump from "pump";
-import { Readable, Transform } from "stream";
+import { Writable, Readable, Transform } from "stream";
 
 // creates an FAI file from a FASTA file streaming in
 class FastaIndexTransform extends Transform {
@@ -79,7 +79,7 @@ class FastaIndexTransform extends Transform {
 }
 
 export async function generateFastaIndex(
-  faiPath: string,
+  fileWriteStream: Writable,
   fileDataStream: Readable
 ) {
   return new Promise((resolve, reject) => {
@@ -87,7 +87,7 @@ export async function generateFastaIndex(
       fileDataStream,
       split2(/\n/),
       new FastaIndexTransform(),
-      fs.createWriteStream(faiPath),
+      fileWriteStream,
       function (err) {
         if (err) {
           reject(err);
