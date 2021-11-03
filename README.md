@@ -9,7 +9,7 @@ Operates on a readStream/writeStream
 ```js
 import { generateFastaIndex } from "@gmod/faidx";
 const write = fs.createWriteStream("out.fa.fai");
-const read = fs.createWriteStream("out.fa");
+const read = fs.createReadStream("out.fa");
 await generateFastaIndex(write, read);
 ```
 
