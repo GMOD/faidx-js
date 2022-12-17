@@ -1,3 +1,5 @@
+[![Build Status](https://img.shields.io/github/actions/workflow/status/GMOD/faidx-js/push.yml?branch=main&logo=github&style=for-the-badge)](https://github.com/GMOD/faidx-js/actions?query=branch%3Amaster+workflow%3APush+)
+
 ## Install
 
     $ npm install --save @gmod/faidx
