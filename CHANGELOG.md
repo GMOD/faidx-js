@@ -1,3 +1,8 @@
+## v1.0.4
+
+- Add sourceMap
+
+
 ## v1.0.3
 
 - Smaller list of dependencies
