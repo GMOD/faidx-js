@@ -24,7 +24,6 @@ class FastaIndexTransform extends Transform {
       this.foundAny = true
       if (
         this.possibleBadLine &&
-        this.lineNum !== undefined &&
         this.possibleBadLine[0] !== this.lineNum - 1
       ) {
         done(new Error(this.possibleBadLine[1]))
