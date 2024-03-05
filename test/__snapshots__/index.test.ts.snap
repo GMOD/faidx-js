@@ -1,7 +1,0 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`gather 1`] = `
-"ctgA	50001	6	21	22
-ctgB	6079	50847	79	80
-"
-`;

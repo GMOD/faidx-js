@@ -9,9 +9,9 @@ class FastaIndexTransform extends Transform {
   refName: string | undefined
   currOffset = 0
   refSeqLen = 0
-  lineBytes = 0
-  lineBases = 0
-  refOffset = 0
+  lineBytes = undefined as number | undefined
+  lineBases = undefined as number | undefined
+  refOffset = undefined as number | undefined
   lineNum = 0
 
   _transform(chunk: Buffer, encoding: unknown, done: (error?: Error) => void) {
@@ -24,6 +24,7 @@ class FastaIndexTransform extends Transform {
       this.foundAny = true
       if (
         this.possibleBadLine &&
+        this.lineNum !== undefined &&
         this.possibleBadLine[0] !== this.lineNum - 1
       ) {
         done(new Error(this.possibleBadLine[1]))
@@ -35,9 +36,9 @@ class FastaIndexTransform extends Transform {
         )
       }
       // reset
-      this.lineBytes = 0
       this.refSeqLen = 0
-      this.lineBases = 0
+      this.lineBytes = undefined
+      this.lineBases = undefined
       this.refName = line.trim().slice(1).split(/\s+/)[0]
       this.currOffset += currentLineBytes
       this.refOffset = this.currOffset
@@ -49,8 +50,10 @@ class FastaIndexTransform extends Transform {
           `Not all lines in file have same width, please check your FASTA file line ${this.lineNum}`,
         ]
       }
-      this.lineBytes = currentLineBytes
-      this.lineBases = currentLineBases
+      if (this.lineBytes === undefined && this.lineBases === undefined) {
+        this.lineBytes = currentLineBytes
+        this.lineBases = currentLineBases
+      }
       this.currOffset += currentLineBytes
       this.refSeqLen += currentLineBases
     }
