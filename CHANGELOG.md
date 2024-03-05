@@ -1,7 +1,10 @@
+## v1.0.5
+
+- Fix lineLength calculation and test against samtools faidx outpu
+
 ## v1.0.4
 
 - Add sourceMap
-
 
 ## v1.0.3
 

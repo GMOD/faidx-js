@@ -11,7 +11,7 @@ class FastaIndexTransform extends Transform {
   refSeqLen = 0
   lineBytes = undefined as number | undefined
   lineBases = undefined as number | undefined
-  refOffset = undefined as number | undefined
+  refOffset = 0
   lineNum = 0
 
   _transform(chunk: Buffer, encoding: unknown, done: (error?: Error) => void) {
