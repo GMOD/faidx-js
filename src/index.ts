@@ -1,6 +1,7 @@
-import split2 from 'split2'
+import { Readable, Transform, Writable } from 'stream'
+
 import pump from 'pump'
-import { Writable, Readable, Transform } from 'stream'
+import split2 from 'split2'
 
 // creates an FAI file from a FASTA file streaming in
 class FastaIndexTransform extends Transform {
