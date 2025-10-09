@@ -4,7 +4,16 @@
   "description": "create indexed fasta files",
   "license": "MIT",
   "repository": "GMOD/faidx-js",
-  "main": "dist/index.js",
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "import": {
+      "import": "./esm/index.js"
+    },
+    "require": {
+      "require": "./dist/index.js"
+    }
+  },
   "author": {
     "name": "Colin Diesh",
     "email": "colin.diesh@gmail.com",
@@ -18,15 +27,20 @@
   },
   "files": [
     "dist",
-    "src"
+    "src",
+    "esm"
   ],
   "scripts": {
-    "clean": "rimraf dist",
-    "prebuild": "npm run clean",
-    "build": "tsc",
-    "lint": "eslint --report-unused-disable-directives --max-warnings 0",
     "test": "vitest",
-    "preversion": "npm run build",
+    "lint": "eslint --report-unused-disable-directives --max-warnings 0",
+    "clean": "rimraf dist esm",
+    "format": "prettier --write .",
+    "build:esm": "tsc --outDir esm",
+    "build:es5": "tsc --module commonjs --outDir dist",
+    "build": "npm run build:esm && npm run build:es5",
+    "prebuild": "npm run clean && npm run lint",
+    "postbuild:es5": "echo '{\"type\": \"commonjs\"}' > dist/package.json",
+    "preversion": "npm run lint && npm test run && npm run build",
     "postversion": "git push --follow-tags"
   },
   "keywords": [
