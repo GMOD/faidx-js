@@ -19,10 +19,17 @@ const read = Readable.toWeb(fs.createReadStream('out.fa'))
 await generateFastaIndex(write, read)
 ```
 
-// In the browser, you can use File/Blob streams const file = // ... from input
-element await generateFastaIndex( new WritableStream({ write(chunk) { // ...
-handle chunk }, }), file.stream(), )
-
+```js
+// In the browser, you can use File/Blob streams
+const file = // ... from input element
+await generateFastaIndex(
+  new WritableStream({
+    write(chunk) {
+      // ... handle chunk
+    },
+  }),
+  file.stream(),
+)
 ```
 
 ## Academic Use
@@ -35,7 +42,6 @@ be linked from [jbrowse.org](http://jbrowse.org).
 ## License
 
 MIT © [Colin Diesh](https://github.com/cmdcolin)
-```
 
 ## Publishing
 
