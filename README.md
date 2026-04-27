@@ -6,30 +6,33 @@
 
 ## Usage
 
-Operates on a `ReadableStream<Uint8Array>` and `WritableStream<Uint8Array>`.
+Accepts a `ReadableStream<Uint8Array>` (FASTA file) and a
+`WritableStream<Uint8Array>` (FAI output).
+
+Node.js — write index to a `.fai` file:
 
 ```js
 import fs from 'fs'
-import { generateFastaIndex } from '@gmod/faidx'
 import { Readable, Writable } from 'stream'
+import { generateFastaIndex } from '@gmod/faidx'
 
-// In Node.js, you can convert Node streams to Web Streams
-const write = Writable.toWeb(fs.createWriteStream('out.fa.fai'))
-const read = Readable.toWeb(fs.createReadStream('out.fa'))
-await generateFastaIndex(write, read)
+await generateFastaIndex(
+  Writable.toWeb(fs.createWriteStream('genome.fa.fai')),
+  Readable.toWeb(fs.createReadStream('genome.fa')),
+)
 ```
 
+Browser — get the FAI index as a string from a `File` input:
+
 ```js
-// In the browser, you can use File/Blob streams
-const file = // ... from input element
-await generateFastaIndex(
-  new WritableStream({
-    write(chunk) {
-      // ... handle chunk
-    },
-  }),
-  file.stream(),
-)
+import { generateFastaIndex } from '@gmod/faidx'
+
+const { readable, writable } = new TransformStream()
+const [fai] = await Promise.all([
+  new Response(readable).text(),
+  generateFastaIndex(writable, file.stream()),
+])
+// fai is the FAI index as a string
 ```
 
 ## Academic Use
