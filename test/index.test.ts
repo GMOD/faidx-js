@@ -14,22 +14,17 @@ function stringReadable(text: string): ReadableStream<Uint8Array> {
   })
 }
 
-async function collectOutput(
-  fasta: string,
-): Promise<string> {
+async function collectOutput(fasta: string): Promise<string> {
   const chunks: Uint8Array[] = []
   await generateFastaIndex(
-    new WritableStream<Uint8Array>({ write(chunk) { chunks.push(chunk) } }),
+    new WritableStream<Uint8Array>({
+      write(chunk) {
+        chunks.push(chunk)
+      },
+    }),
     stringReadable(fasta),
   )
-  return new TextDecoder().decode(
-    chunks.reduce((acc, c) => {
-      const merged = new Uint8Array(acc.length + c.length)
-      merged.set(acc)
-      merged.set(c, acc.length)
-      return merged
-    }, new Uint8Array()),
-  )
+  return Buffer.concat(chunks).toString('utf8')
 }
 
 test('gather', async () => {
@@ -58,8 +53,25 @@ test('inconsistent line widths in last sequence errors', async () => {
   const fasta = '>seq1\nACGTACGT\n>seq2\nACGTACGT\nACGT\nACGTACGT\n'
   await expect(
     generateFastaIndex(
-      new WritableStream<Uint8Array>({ write() {} }),
+      new WritableStream<Uint8Array>({ write: () => undefined }),
       stringReadable(fasta),
     ),
   ).rejects.toThrow()
+})
+
+test('two consecutive short lines mid-sequence errors', async () => {
+  // Two short lines in a row — the earlier one is not the last data line,
+  // so this must be flagged even though the *latest* mismatch is the last line.
+  const fasta = '>seq1\nACGTACGT\nACGT\nAC\n'
+  await expect(
+    generateFastaIndex(
+      new WritableStream<Uint8Array>({ write: () => undefined }),
+      stringReadable(fasta),
+    ),
+  ).rejects.toThrow(/same width/)
+})
+
+test('refName handles space after >', async () => {
+  const output = await collectOutput('> seq1 description\nACGT\n')
+  expect(output).toBe('seq1\t4\t19\t4\t5\n')
 })
