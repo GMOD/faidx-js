@@ -1,6 +1,7 @@
 {
   "name": "@gmod/faidx",
   "version": "2.0.3",
+  "packageManager": "pnpm@11.15.1",
   "description": "create indexed fasta files",
   "license": "MIT",
   "repository": {
@@ -8,6 +9,7 @@
     "url": "https://github.com/GMOD/faidx-js.git"
   },
   "type": "module",
+  "sideEffects": false,
   "main": "dist/index.js",
   "exports": {
     "import": "./esm/index.js",
