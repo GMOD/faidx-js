@@ -13,7 +13,9 @@
 
 ### Performance Improvements
 
-- Scan FASTA bytes instead of decoding to text
+- **BREAKING** Scan FASTA bytes instead of decoding to text. `LineSplitter` and
+  `FastaIndexStream` are replaced by a single `FastaIndexTransform`, which takes
+  `Uint8Array` rather than `string`. `generateFastaIndex` is unchanged.
 
 ## v2.0.5
 
