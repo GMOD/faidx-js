@@ -1,3 +1,20 @@
+## [3.0.0](https://github.com/GMOD/faidx-js/compare/v2.0.5...v3.0.0) (2026-08-01)
+
+### Chores
+
+- Share one eslint-plugin-unicorn opt-out list across the repos
+- Drop redundant @typescript-eslint/{eslint-plugin,parser}
+- Turn off unicorn/prefer-early-return across the repos
+- Add git-cliff for changelog generation
+
+### Documentation
+
+- Backfill CHANGELOG.md from v1.0.6 through v2.0.5
+
+### Performance Improvements
+
+- Scan FASTA bytes instead of decoding to text
+
 ## v2.0.5
 
 - Declare `@eslint/js` as a direct dependency; it was resolving through a hoisted transitive copy, which broke lint under a fresh pnpm 11 install
