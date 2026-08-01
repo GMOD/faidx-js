@@ -35,6 +35,12 @@ const [fai] = await Promise.all([
 // fai is the FAI index as a string
 ```
 
+`FastaIndexTransform` is also exported if you want the
+`TransformStream<Uint8Array, string>` on its own.
+
+The input is scanned as bytes, never buffered as text, so memory stays flat
+regardless of how long the sequence lines are.
+
 ## Academic Use
 
 This package was written with funding from the [NHGRI](http://genome.gov) as
