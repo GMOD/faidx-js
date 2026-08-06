@@ -2,7 +2,7 @@ import fs from 'fs'
 
 import { expect, test } from 'vitest'
 
-import { generateFastaIndex } from '../src'
+import { generateFastaIndex } from '../src/index.ts'
 
 function stringReadable(
   text: string,
