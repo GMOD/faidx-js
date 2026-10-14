@@ -35,11 +35,9 @@ const [fai] = await Promise.all([
 // fai is the FAI index as a string
 ```
 
-`FastaIndexTransform` is also exported if you want the
-`TransformStream<Uint8Array, string>` on its own.
-
-`FastaIndexTransform` scans the input as bytes and never buffers it as text, so
-memory stays flat regardless of how long the sequence lines are.
+The package also exports `FastaIndexTransform`, the
+`TransformStream<Uint8Array, string>` on its own. It scans the input as bytes,
+so memory stays flat however long the sequence lines are.
 
 ## Academic Use
 
@@ -52,12 +50,6 @@ be linked from [jbrowse.org](http://jbrowse.org).
 
 MIT © [Colin Diesh](https://github.com/cmdcolin)
 
-## Publishing
+## Contributing
 
-GitHub Actions publishes each release with
-[trusted publishing](https://docs.npmjs.com/about-trusted-publishing). Start a
-release with:
-
-```bash
-pnpm version patch  # or minor/major
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development and release steps.
