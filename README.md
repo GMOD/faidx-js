@@ -6,8 +6,8 @@
 
 ## Usage
 
-Accepts a `ReadableStream<Uint8Array>` (FASTA file) and a
-`WritableStream<Uint8Array>` (FAI output).
+`generateFastaIndex` reads a FASTA file from a `ReadableStream<Uint8Array>` and
+writes the FAI index to a `WritableStream<Uint8Array>`.
 
 Node.js — write index to a `.fai` file:
 
@@ -38,8 +38,8 @@ const [fai] = await Promise.all([
 `FastaIndexTransform` is also exported if you want the
 `TransformStream<Uint8Array, string>` on its own.
 
-The input is scanned as bytes, never buffered as text, so memory stays flat
-regardless of how long the sequence lines are.
+`FastaIndexTransform` scans the input as bytes and never buffers it as text, so
+memory use stays flat however long the sequence lines are.
 
 ## Academic Use
 
@@ -54,8 +54,9 @@ MIT © [Colin Diesh](https://github.com/cmdcolin)
 
 ## Publishing
 
-[Trusted publishing](https://docs.npmjs.com/about-trusted-publishing) via GitHub
-Actions.
+GitHub Actions publishes each release with
+[trusted publishing](https://docs.npmjs.com/about-trusted-publishing). Start a
+release with:
 
 ```bash
 pnpm version patch  # or minor/major
