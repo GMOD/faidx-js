@@ -39,7 +39,7 @@ const [fai] = await Promise.all([
 `TransformStream<Uint8Array, string>` on its own.
 
 `FastaIndexTransform` scans the input as bytes and never buffers it as text, so
-memory use stays flat however long the sequence lines are.
+memory stays flat regardless of how long the sequence lines are.
 
 ## Academic Use
 
