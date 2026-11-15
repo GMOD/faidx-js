@@ -1,3 +1,34 @@
+## [3.1.0](https://github.com/GMOD/faidx-js/compare/v3.0.1...v3.1.0) (2026-11-15)
+
+### Bug Fixes
+
+- Accept a short last line followed by blank lines ([5a379db](https://github.com/GMOD/faidx-js/commit/5a379db58f4465e0895ce32a0d12eaec3b87a7ae))
+- Match samtools on mixed line endings, stray sequence and duplicate names ([8554e38](https://github.com/GMOD/faidx-js/commit/8554e38ba7b7919b9c6bb403a11fafa265118a98))
+
+### Chores
+
+- Render only the commit subject, and link the commit ([e12e846](https://github.com/GMOD/faidx-js/commit/e12e8469f5ac04280c2e5143a395c24bf9b73f79))
+- Create a GitHub release for each published tag ([75e7e95](https://github.com/GMOD/faidx-js/commit/75e7e95e9cff82f3b145aa0d94193c768d3f69be))
+- Enforce type strippability in tsconfig ([47b6b80](https://github.com/GMOD/faidx-js/commit/47b6b806e2efac2de7e09103baf05a73857a93db))
+- Keep agent worktrees out of the toolchain's way ([ac13ed4](https://github.com/GMOD/faidx-js/commit/ac13ed44a07b913f2bf3ccb78c88ec3db7e6832c))
+
+### Documentation
+
+- Correct the release command in CONTRIBUTING, and its voice ([663b6b6](https://github.com/GMOD/faidx-js/commit/663b6b65c6018febde0e68bd2259efa844fda5d9))
+
+### Features
+
+- Accept an AbortSignal in generateFastaIndex ([833e0f2](https://github.com/GMOD/faidx-js/commit/833e0f2feacda7cec3d7059ab6e0c395937a378f))
+
+### Other Changes
+
+- Rewrite AI-writing tropes in README and CONTRIBUTING ([e82ae13](https://github.com/GMOD/faidx-js/commit/e82ae13629dcb9801e9874433d6e0961ca45a88f))
+- Restore wording the tropes rewrite changed without a trope ([82f8975](https://github.com/GMOD/faidx-js/commit/82f89752370ac118e0e3a2af74b03d7323d3c8f1))
+- Trim README wordiness, point release steps at CONTRIBUTING.md ([ec0e5a6](https://github.com/GMOD/faidx-js/commit/ec0e5a670fa2d7e8a3ec4f040e47cd79b916e7a5))
+- Bump devDependencies, drop unused @vitest/coverage-v8 ([7d06d3f](https://github.com/GMOD/faidx-js/commit/7d06d3fd4db1d66818e62739102b78f08e72b59e))
+- Build src against web lib types, drop stale ignore entries ([cad474e](https://github.com/GMOD/faidx-js/commit/cad474ee5f59341f32046836d0878b806bb9bd74))
+- Lead README with FastaIndexTransform, use openAsBlob for Node ([1e54ee1](https://github.com/GMOD/faidx-js/commit/1e54ee1937a9541cb1fbe7610892dbc894c8728c))
+
 ## [3.0.1](https://github.com/GMOD/faidx-js/compare/v3.0.0...v3.0.1) (2026-08-10)
 
 ### Chores
