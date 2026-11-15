@@ -37,6 +37,7 @@ export class FastaIndexTransform extends TransformStream<Uint8Array, string> {
     const decoder = new TextDecoder()
 
     let current: FastaRecord | undefined
+    const emittedNames = new Set<string>()
     let offset = 0
     let lineNum = 1
 
@@ -55,21 +56,26 @@ export class FastaIndexTransform extends TransformStream<Uint8Array, string> {
       } else if (r.lineBases === 0) {
         r.lineBases = bases
         r.lineBytes = bytes
-      } else if (bases > r.lineBases) {
+      } else if (bases > r.lineBases || bytes > r.lineBytes) {
         throw new Error(widthError(lineNum))
-      } else if (bases < r.lineBases) {
+      } else if (bases < r.lineBases || bytes < r.lineBytes) {
         r.errorIfMoreBases = widthError(lineNum)
       }
       r.length += bases
+    }
+
+    const emitCurrent = (c: TransformStreamDefaultController<string>) => {
+      if (current && !emittedNames.has(current.name)) {
+        emittedNames.add(current.name)
+        c.enqueue(formatEntry(current))
+      }
     }
 
     const endLine = (c: TransformStreamDefaultController<string>) => {
       const lineBytes = lineLen + 1
       offset += lineBytes
       if (isHeader) {
-        if (current) {
-          c.enqueue(formatEntry(current))
-        }
+        emitCurrent(c)
         // drop the leading '>', then take the first whitespace-delimited token
         const [name = ''] = (headerText + decoder.decode())
           .slice(1)
@@ -81,6 +87,10 @@ export class FastaIndexTransform extends TransformStream<Uint8Array, string> {
         const bases = lineLen - (lastByte === CARRIAGE_RETURN ? 1 : 0)
         if (current) {
           addSequenceLine(current, bases, lineBytes)
+        } else if (bases > 0) {
+          throw new Error(
+            `Sequence found before the first header, please check your FASTA file line ${lineNum}`,
+          )
         }
       }
       lineNum++
@@ -124,7 +134,7 @@ export class FastaIndexTransform extends TransformStream<Uint8Array, string> {
           endLine(c)
         }
         if (current) {
-          c.enqueue(formatEntry(current))
+          emitCurrent(c)
         } else {
           throw new Error(
             'No sequences found in file. Ensure that this is a valid FASTA file',

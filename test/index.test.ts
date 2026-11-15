@@ -159,3 +159,40 @@ test('sequence after a blank line errors', async () => {
   await expectError('>seq1\nACGT\nAC\n\nAC\n').toThrow(/same width.*line 3$/)
   await expectError('>seq1\n\nACGT\n').toThrow(/Blank line.*line 2$/)
 })
+
+test('matches htslib faidx test fixture', async () => {
+  const fasta = fs.readFileSync(
+    new URL('./htslib/faidx.fa', import.meta.url),
+    'utf8',
+  )
+  const expected = fs.readFileSync(
+    new URL('./htslib/faidx.fa.fai', import.meta.url),
+    'utf8',
+  )
+  expect(await collectOutput(fasta)).toBe(expected)
+})
+
+test('a crlf line followed by an lf line ends the sequence', async () => {
+  expect(await collectOutput('>a\nACGT\r\nACGT\n')).toBe('a\t8\t3\t4\t6\n')
+  await expectError('>a\nACGT\r\nACGT\nAC\n').toThrow(/same width.*line 3$/)
+})
+
+test('an lf line followed by a crlf line errors', async () => {
+  await expectError('>a\nACGT\nACGT\r\nAC\n').toThrow(/same width.*line 3$/)
+})
+
+test('sequence before the first header errors', async () => {
+  await expectError('ACGT\n>a\nAC\n').toThrow(
+    /before the first header.*line 1$/,
+  )
+})
+
+test('blank lines before the first header are skipped', async () => {
+  expect(await collectOutput('\n>a\nACGT\n')).toBe('a\t4\t4\t4\t5\n')
+})
+
+test('duplicate names keep the first record, like samtools', async () => {
+  expect(await collectOutput('>a\nACGT\n>b\nAC\n>a\nACGTACGT\n')).toBe(
+    'a\t4\t3\t4\t5\nb\t2\t11\t2\t3\n',
+  )
+})
