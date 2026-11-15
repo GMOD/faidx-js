@@ -1,8 +1,8 @@
-import fs from 'fs'
+import fs, { openAsBlob } from 'node:fs'
 
 import { expect, test } from 'vitest'
 
-import { generateFastaIndex } from '../src/index.ts'
+import { FastaIndexTransform, generateFastaIndex } from '../src/index.ts'
 
 function stringReadable(
   text: string,
@@ -22,16 +22,12 @@ function stringReadable(
 }
 
 async function indexWithChunkSize(fasta: string, chunkSize: number) {
-  const chunks: Uint8Array[] = []
-  await generateFastaIndex(
-    new WritableStream<Uint8Array>({
-      write(chunk) {
-        chunks.push(chunk)
-      },
-    }),
-    stringReadable(fasta, chunkSize),
-  )
-  return Buffer.concat(chunks).toString('utf8')
+  const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>()
+  const [fai] = await Promise.all([
+    new Response(readable).text(),
+    generateFastaIndex(writable, stringReadable(fasta, chunkSize)),
+  ])
+  return fai
 }
 
 async function collectOutput(fasta: string) {
@@ -58,6 +54,16 @@ test('matches samtools faidx output', async () => {
     'utf8',
   )
   expect(await collectOutput(fasta)).toBe(expected)
+})
+
+test('indexes a file opened with openAsBlob', async () => {
+  const fasta = await openAsBlob(new URL('./volvox.fa', import.meta.url))
+  const lines = await Array.fromAsync(
+    fasta.stream().pipeThrough(new FastaIndexTransform()),
+  )
+  expect(lines.join('')).toBe(
+    fs.readFileSync(new URL('./volvox.fa.fai', import.meta.url), 'utf8'),
+  )
 })
 
 test('output is independent of chunk boundaries', async () => {

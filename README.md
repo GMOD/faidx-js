@@ -6,38 +6,40 @@
 
 ## Usage
 
-`generateFastaIndex` reads a FASTA file from a `ReadableStream<Uint8Array>` and
-writes the FAI index to a `WritableStream<Uint8Array>`.
+`FastaIndexTransform` is a `TransformStream<Uint8Array, string>` that turns
+FASTA bytes into FAI index lines. It scans the input as bytes, so memory stays
+flat however long the sequence lines are.
 
 Node.js — write index to a `.fai` file:
 
 ```js
-import fs from 'fs'
-import { Readable, Writable } from 'stream'
-import { generateFastaIndex } from '@gmod/faidx'
+import { openAsBlob } from 'node:fs'
+import { writeFile } from 'node:fs/promises'
+import { FastaIndexTransform } from '@gmod/faidx'
 
-await generateFastaIndex(
-  Writable.toWeb(fs.createWriteStream('genome.fa.fai')),
-  Readable.toWeb(fs.createReadStream('genome.fa')),
+const fasta = await openAsBlob('genome.fa')
+await writeFile(
+  'genome.fa.fai',
+  fasta.stream().pipeThrough(new FastaIndexTransform()),
 )
 ```
 
 Browser — get the FAI index as a string from a `File` input:
 
 ```js
-import { generateFastaIndex } from '@gmod/faidx'
+import { FastaIndexTransform } from '@gmod/faidx'
 
-const { readable, writable } = new TransformStream()
-const [fai] = await Promise.all([
-  new Response(readable).text(),
-  generateFastaIndex(writable, file.stream()),
-])
-// fai is the FAI index as a string
+const fai = await new Response(
+  file
+    .stream()
+    .pipeThrough(new FastaIndexTransform())
+    .pipeThrough(new TextEncoderStream()),
+).text()
 ```
 
-The package also exports `FastaIndexTransform`, the
-`TransformStream<Uint8Array, string>` on its own. It scans the input as bytes,
-so memory stays flat however long the sequence lines are.
+The package also exports `generateFastaIndex(writable, readable)`, which pipes a
+`ReadableStream<Uint8Array>` of FASTA into a `WritableStream<Uint8Array>` that
+receives the encoded index.
 
 ## Academic Use
 
