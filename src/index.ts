@@ -148,9 +148,10 @@ export class FastaIndexTransform extends TransformStream<Uint8Array, string> {
 export async function generateFastaIndex(
   fileWriteStream: WritableStream<Uint8Array>,
   fileDataStream: ReadableStream<Uint8Array>,
+  { signal }: { signal?: AbortSignal } = {},
 ) {
   await fileDataStream
     .pipeThrough(new FastaIndexTransform())
     .pipeThrough(new TextEncoderStream())
-    .pipeTo(fileWriteStream)
+    .pipeTo(fileWriteStream, { signal })
 }

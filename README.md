@@ -39,7 +39,8 @@ const fai = await new Response(
 
 The package also exports `generateFastaIndex(writable, readable)`, which pipes a
 `ReadableStream<Uint8Array>` of FASTA into a `WritableStream<Uint8Array>` that
-receives the encoded index.
+receives the encoded index. Pass `{ signal }` as a third argument to cancel: an
+abort cancels the read, aborts the writable, and rejects.
 
 ## Academic Use
 

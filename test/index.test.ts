@@ -202,3 +202,51 @@ test('duplicate names keep the first record, like samtools', async () => {
     'a\t4\t3\t4\t5\nb\t2\t11\t2\t3\n',
   )
 })
+
+test('aborting the signal cancels the read and rejects', async () => {
+  const encoder = new TextEncoder()
+  let pulls = 0
+  let cancelled = false
+  let destAborted = false
+  const endless = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(encoder.encode('>chr1\n'))
+    },
+    async pull(controller) {
+      await new Promise(resolve => setImmediate(resolve))
+      pulls++
+      controller.enqueue(encoder.encode('ACGTACGTAC\n'))
+    },
+    cancel() {
+      cancelled = true
+    },
+  })
+  const controller = new AbortController()
+  const pending = generateFastaIndex(
+    new WritableStream({
+      abort() {
+        destAborted = true
+      },
+    }),
+    endless,
+    { signal: controller.signal },
+  )
+  while (pulls < 3) {
+    await new Promise(resolve => setImmediate(resolve))
+  }
+  controller.abort()
+
+  await expect(pending).rejects.toThrow(/abort/i)
+  expect(cancelled).toBe(true)
+  expect(destAborted).toBe(true)
+})
+
+test('an already-aborted signal rejects without indexing', async () => {
+  await expect(
+    generateFastaIndex(
+      new WritableStream({ write: () => undefined }),
+      stringReadable('>a\nACGT\n'),
+      { signal: AbortSignal.abort() },
+    ),
+  ).rejects.toThrow(/abort/i)
+})
