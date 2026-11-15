@@ -21,7 +21,7 @@ function stringReadable(
   })
 }
 
-async function collectOutput(fasta: string, chunkSize?: number) {
+async function indexWithChunkSize(fasta: string, chunkSize: number) {
   const chunks: Uint8Array[] = []
   await generateFastaIndex(
     new WritableStream<Uint8Array>({
@@ -32,6 +32,14 @@ async function collectOutput(fasta: string, chunkSize?: number) {
     stringReadable(fasta, chunkSize),
   )
   return Buffer.concat(chunks).toString('utf8')
+}
+
+async function collectOutput(fasta: string) {
+  const outputs = await Promise.all(
+    [1, 2, 3, fasta.length].map(n => indexWithChunkSize(fasta, n)),
+  )
+  expect(new Set(outputs).size).toBe(1)
+  return outputs[0]
 }
 
 function expectError(fasta: string) {
@@ -59,7 +67,7 @@ test('output is independent of chunk boundaries', async () => {
     'utf8',
   )
   for (const chunkSize of [1, 2, 3, 7, 64, 4096]) {
-    expect(await collectOutput(fasta, chunkSize)).toBe(expected)
+    expect(await indexWithChunkSize(fasta, chunkSize)).toBe(expected)
   }
 })
 
@@ -118,4 +126,36 @@ test('zero-length record emits 0 widths, not undefined', async () => {
 
 test('header-only file emits a zero-length record', async () => {
   expect(await collectOutput('>seq1\n')).toBe('seq1\t0\t6\t0\t0\n')
+})
+
+test('short last line followed by blank lines', async () => {
+  // matches `samtools faidx`
+  expect(await collectOutput('>seq1\nACGT\nAC\n\n>seq2\nACGT\n')).toBe(
+    'seq1\t6\t6\t4\t5\nseq2\t4\t21\t4\t5\n',
+  )
+  expect(await collectOutput('>seq1\nACGT\nAC\n\n')).toBe('seq1\t6\t6\t4\t5\n')
+  expect(await collectOutput('>seq1\nACGT\nAC\n\n\n>seq2\nACGT\n')).toBe(
+    'seq1\t6\t6\t4\t5\nseq2\t4\t22\t4\t5\n',
+  )
+  expect(
+    await collectOutput('>seq1\r\nACGT\r\nAC\r\n\r\n>seq2\r\nACGT\r\n'),
+  ).toBe('seq1\t6\t7\t4\t6\nseq2\t4\t26\t4\t6\n')
+})
+
+test('several trailing blank lines', async () => {
+  expect(await collectOutput('>seq1\nACGT\n\n\n')).toBe('seq1\t4\t6\t4\t5\n')
+})
+
+test('last line longer than the first errors', async () => {
+  await expectError('>seq1\nAC\nACGT\n').toThrow(/same width.*line 3$/)
+})
+
+test('error names the short line, counting from 1', async () => {
+  await expectError('>seq1\nACGTACGT\nACGT\nAC\n').toThrow(/line 3$/)
+})
+
+test('sequence after a blank line errors', async () => {
+  await expectError('>seq1\nACGT\n\nACGT\n').toThrow(/Blank line.*line 3$/)
+  await expectError('>seq1\nACGT\nAC\n\nAC\n').toThrow(/same width.*line 3$/)
+  await expectError('>seq1\n\nACGT\n').toThrow(/Blank line.*line 2$/)
 })

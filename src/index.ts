@@ -8,12 +8,16 @@ interface FastaRecord {
   offset: number
   /** bases seen so far */
   length: number
-  /** bases on the record's first sequence line */
+  /** bases on the record's first sequence line, 0 until there is one */
   lineBases: number
   /** bytes on the record's first sequence line, including the newline */
   lineBytes: number
-  sawSeqLine: boolean
+  /** set once a short or blank line ends the sequence, thrown if more follows */
+  errorIfMoreBases?: string
 }
+
+const widthError = (line: number) =>
+  `Not all lines in file have same width, please check your FASTA file line ${line}`
 
 function formatEntry(r: FastaRecord) {
   return `${r.name}\t${r.length}\t${r.offset}\t${r.lineBases}\t${r.lineBytes}\n`
@@ -34,8 +38,7 @@ export class FastaIndexTransform extends TransformStream<Uint8Array, string> {
 
     let current: FastaRecord | undefined
     let offset = 0
-    let lineNum = 0
-    let mismatchLine: number | undefined
+    let lineNum = 1
 
     // the line being scanned, which may be split across chunks
     let atLineStart = true
@@ -44,81 +47,54 @@ export class FastaIndexTransform extends TransformStream<Uint8Array, string> {
     let lineLen = 0
     let lastByte: number | undefined
 
-    // A short line is only legal as a record's last line, so the first mismatch
-    // is held until we know whether another line followed it. Holding the
-    // *first* rather than the latest keeps a legal short last line from masking
-    // an illegal one earlier in the record.
-    const reportMismatch = (c: TransformStreamDefaultController<string>) => {
-      const invalid = mismatchLine !== undefined && mismatchLine !== lineNum - 1
-      if (invalid) {
-        c.error(
-          new Error(
-            `Not all lines in file have same width, please check your FASTA file line ${mismatchLine}`,
-          ),
-        )
+    const addSequenceLine = (r: FastaRecord, bases: number, bytes: number) => {
+      if (bases === 0) {
+        r.errorIfMoreBases ??= `Blank line inside sequence ${r.name}, please check your FASTA file line ${lineNum}`
+      } else if (r.errorIfMoreBases !== undefined) {
+        throw new Error(r.errorIfMoreBases)
+      } else if (r.lineBases === 0) {
+        r.lineBases = bases
+        r.lineBytes = bytes
+      } else if (bases > r.lineBases) {
+        throw new Error(widthError(lineNum))
+      } else if (bases < r.lineBases) {
+        r.errorIfMoreBases = widthError(lineNum)
       }
-      return invalid
+      r.length += bases
     }
 
-    /** returns false once the stream has been errored */
     const endLine = (c: TransformStreamDefaultController<string>) => {
       const lineBytes = lineLen + 1
-      let ok = true
-
+      offset += lineBytes
       if (isHeader) {
-        ok = !reportMismatch(c)
-        if (ok) {
-          if (current) {
-            c.enqueue(formatEntry(current))
-          }
-          offset += lineBytes
-          // drop the leading '>', then take the first whitespace-delimited token
-          const [name = ''] = (headerText + decoder.decode())
-            .slice(1)
-            .trim()
-            .split(/\s+/)
-          current = {
-            name,
-            offset,
-            length: 0,
-            lineBases: 0,
-            lineBytes: 0,
-            sawSeqLine: false,
-          }
-          mismatchLine = undefined
+        if (current) {
+          c.enqueue(formatEntry(current))
         }
+        // drop the leading '>', then take the first whitespace-delimited token
+        const [name = ''] = (headerText + decoder.decode())
+          .slice(1)
+          .trim()
+          .split(/\s+/)
+        current = { name, offset, length: 0, lineBases: 0, lineBytes: 0 }
       } else {
         // a trailing \r from a CRLF line ending is not a base
         const bases = lineLen - (lastByte === CARRIAGE_RETURN ? 1 : 0)
         if (current) {
-          if (current.sawSeqLine) {
-            if (bases !== current.lineBases) {
-              mismatchLine ??= lineNum
-            }
-          } else {
-            current.sawSeqLine = true
-            current.lineBases = bases
-            current.lineBytes = lineBytes
-          }
-          current.length += bases
+          addSequenceLine(current, bases, lineBytes)
         }
-        offset += lineBytes
       }
-
       lineNum++
       atLineStart = true
       isHeader = false
       headerText = ''
       lineLen = 0
       lastByte = undefined
-      return ok
     }
 
     super({
       transform(chunk, c) {
         let i = 0
-        let ok = true
-        while (i < chunk.length && ok) {
+        while (i < chunk.length) {
           if (atLineStart) {
             isHeader = chunk[i] === GREATER_THAN
             atLineStart = false
@@ -137,23 +113,22 @@ export class FastaIndexTransform extends TransformStream<Uint8Array, string> {
           if (nl === -1) {
             i = chunk.length
           } else {
-            ok = endLine(c)
+            endLine(c)
             i = nl + 1
           }
         }
       },
       flush(c) {
         // a final line with no trailing newline still counts
-        if (atLineStart || endLine(c)) {
-          if (current === undefined) {
-            c.error(
-              new Error(
-                'No sequences found in file. Ensure that this is a valid FASTA file',
-              ),
-            )
-          } else if (!reportMismatch(c)) {
-            c.enqueue(formatEntry(current))
-          }
+        if (!atLineStart) {
+          endLine(c)
+        }
+        if (current) {
+          c.enqueue(formatEntry(current))
+        } else {
+          throw new Error(
+            'No sequences found in file. Ensure that this is a valid FASTA file',
+          )
         }
       },
     })
